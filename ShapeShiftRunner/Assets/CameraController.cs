@@ -10,7 +10,7 @@ public class CameraController : MonoBehaviour {
         player = GameObject.Find("Player");
 	}
     
-    private float offsetX = 14;
+    private float offsetX = 7;
     private float damping = 1.0f;
     private float velocity = 0;
 
@@ -20,9 +20,9 @@ public class CameraController : MonoBehaviour {
         float currentX = pos.x - offsetX;
         float targetX = player.transform.position.x;
         
-        currentX = Mathf.SmoothDamp(currentX, targetX, ref velocity, 0.05f, 15);
+        //currentX = Mathf.SmoothDamp(currentX, targetX, ref velocity, 0.05f, 15);
 
-        pos.x = currentX + offsetX;
+        pos.x = targetX + offsetX;
 
 
         transform.position = pos;
