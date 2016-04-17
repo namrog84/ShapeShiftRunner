@@ -32,6 +32,7 @@ public class MainPlayer : MonoBehaviour {
     public AudioClip woosh;
     public AudioClip woohoo;
     public AudioClip aghh;
+    public AudioClip deadsound;
 
     // Update is called once per frame
     void Update()
@@ -45,6 +46,10 @@ public class MainPlayer : MonoBehaviour {
         {
             MyRigidBody2d.velocity = Vector3.zero;
             return;
+        }
+        if(transform.position.x > 370)
+        {
+            SceneManager.LoadScene(3);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -86,6 +91,10 @@ public class MainPlayer : MonoBehaviour {
         {
             groundTick = 0;
         }
+        if(groundTick >= 2)
+        {
+            canJump = true;
+        }
 
         if (transform.position.y < 5)
         {
@@ -96,7 +105,7 @@ public class MainPlayer : MonoBehaviour {
 
         if (isAlive)
         {
-            if (MyRigidBody2d.velocity.x == 0)
+            if (MyRigidBody2d.velocity.x <= 0)
             {
                 deathCounter++;
             }
@@ -113,7 +122,7 @@ public class MainPlayer : MonoBehaviour {
 
     }
 
-
+    bool canJump = true;
     bool isAlive = true;
     int deathCounter = 0;
     IEnumerator Death()
@@ -121,7 +130,7 @@ public class MainPlayer : MonoBehaviour {
         AudioSource.PlayClipAtPoint(aghh, Camera.main.transform.position);
         yield return new WaitForSeconds(1);
 
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(2);
     }
 
     public void FixedUpdate()
@@ -149,6 +158,7 @@ public class MainPlayer : MonoBehaviour {
             {
                 AudioSource.PlayClipAtPoint(woosh, Camera.main.transform.position);
             }
+            canJump = true;
             lastWoosh = Time.time;
         }
         if (other.transform.tag == "Baddie" && currentState != PlayerShapeState.Square)
@@ -160,6 +170,8 @@ public class MainPlayer : MonoBehaviour {
         }
         if (other.transform.tag == "Baddie" && currentState == PlayerShapeState.Square)
         {
+            AudioSource.PlayClipAtPoint(deadsound, Camera.main.transform.position);
+            
             Destroy(other.gameObject);
         }
     }
@@ -169,8 +181,9 @@ public class MainPlayer : MonoBehaviour {
         switch (currentState)
         {
             case PlayerShapeState.Triangle:
-                if (groundTick >= 3)
+                if (canJump)
                 {
+                    canJump = false;
                     var vel = MyRigidBody2d.velocity;
                     vel.y = 8;
                     MyRigidBody2d.velocity = vel;

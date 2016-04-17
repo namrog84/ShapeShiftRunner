@@ -28,7 +28,7 @@ public class playdeath : MonoBehaviour {
 	void Update () {
         if (Input.anyKeyDown)
         {
-            SceneManager.LoadScene(0);
+            SceneManager.LoadScene(1);
         }
 	}
 }
