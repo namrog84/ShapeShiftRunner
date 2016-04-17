@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System;
+using UnityEngine.SceneManagement;
 
 public class MainPlayer : MonoBehaviour {
 
@@ -28,31 +29,46 @@ public class MainPlayer : MonoBehaviour {
     PlayerShapeState currentState;
     int groundTick = 0;
 
-
+    public AudioClip woosh;
+    public AudioClip woohoo;
+    public AudioClip aghh;
 
     // Update is called once per frame
-    void Update ()
+    void Update()
     {
         if (world == null)
         {
             world = GameObject.Find("GameManager").GetComponent<WorldSpawner>();
         }
+
+        if (!isAlive)
+        {
+            MyRigidBody2d.velocity = Vector3.zero;
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             GetComponent<SpriteRenderer>().sprite = SquareSprite;
-            GetComponent<BoxCollider2D>().sharedMaterial = NonBounceMaterial;
+            GetComponent<CircleCollider2D>().sharedMaterial = NonBounceMaterial;
+            MyRigidBody2d.freezeRotation = true;
+            transform.rotation = Quaternion.identity;
             currentState = PlayerShapeState.Square;
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             GetComponent<SpriteRenderer>().sprite = TriangleSprite;
-            GetComponent<BoxCollider2D>().sharedMaterial = NonBounceMaterial;
+            GetComponent<CircleCollider2D>().sharedMaterial = NonBounceMaterial;
+            MyRigidBody2d.freezeRotation = true;
+            transform.rotation = Quaternion.identity;
             currentState = PlayerShapeState.Triangle;
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
+            //GetComponent<BoxCollider2D>()
             GetComponent<SpriteRenderer>().sprite = CircleSprite;
-            GetComponent<BoxCollider2D>().sharedMaterial = BounceMaterial;
+            GetComponent<CircleCollider2D>().sharedMaterial = BounceMaterial;
+            MyRigidBody2d.freezeRotation = false;
             currentState = PlayerShapeState.Circle;
         }
 
@@ -62,7 +78,7 @@ public class MainPlayer : MonoBehaviour {
             ActionButton();
         }
 
-        if(MyRigidBody2d.velocity.y == 0)
+        if (MyRigidBody2d.velocity.y == 0)
         {
             groundTick++;
         }
@@ -70,17 +86,86 @@ public class MainPlayer : MonoBehaviour {
         {
             groundTick = 0;
         }
+
+        if (transform.position.y < 5)
+        {
+            isAlive = false;
+            StartCoroutine(Death());
+
+        }
+
+        if (isAlive)
+        {
+            if (MyRigidBody2d.velocity.x == 0)
+            {
+                deathCounter++;
+            }
+            else
+            {
+                deathCounter = 0;
+            }
+            if (deathCounter > 3)
+            {
+                isAlive = false;
+                StartCoroutine(Death());
+            }
+        }
+
     }
+
+
+    bool isAlive = true;
+    int deathCounter = 0;
+    IEnumerator Death()
+    {
+        AudioSource.PlayClipAtPoint(aghh, Camera.main.transform.position);
+        yield return new WaitForSeconds(1);
+
+        SceneManager.LoadScene(1);
+    }
+
     public void FixedUpdate()
     {
+
+        if(!isAlive)
+        {
+            //do nothing when dead
+            return;
+        }
         var currVel = MyRigidBody2d.velocity;
         currVel.x = Mathf.Max(6, currVel.x);
         MyRigidBody2d.velocity = currVel;
     }
 
+    public void OnCollisionEnter2D(Collision2D other)
+    {
+        Debug.Log(other.transform.tag);
+
+        if (other.transform.tag == "Ground")
+        {
+            GetComponentInChildren<ParticleSystem>().Clear();
+            GetComponentInChildren<ParticleSystem>().Play();
+            if(Time.time - lastWoosh > 1)
+            {
+                AudioSource.PlayClipAtPoint(woosh, Camera.main.transform.position);
+            }
+            lastWoosh = Time.time;
+        }
+        if (other.transform.tag == "Baddie" && currentState != PlayerShapeState.Square)
+        {
+            
+            AudioSource.PlayClipAtPoint(woohoo, Camera.main.transform.position);
+            isAlive = false;
+            StartCoroutine(Death());
+        }
+        if (other.transform.tag == "Baddie" && currentState == PlayerShapeState.Square)
+        {
+            Destroy(other.gameObject);
+        }
+    }
+    float lastWoosh;
     private void ActionButton()
     {
-        Debug.Log("what");
         switch (currentState)
         {
             case PlayerShapeState.Triangle:
